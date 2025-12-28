@@ -1,40 +1,55 @@
 ﻿using BlazorTodoApp.Shared;
+using Microsoft.JSInterop;
 
 namespace BlazorTodoApp.Client.Services;
 
-
 public class TodoService
 {
+    private readonly IJSRuntime _js;
+    private const string StorageKey = "todos";
 
-    private List<TodoItem> _todos = new();
-    public IReadOnlyList<TodoItem> Todos => _todos;
+    public List<TodoItem> Todos { get; private set; } = new List<TodoItem>();
 
-    public void Add(string title)
+    public TodoService(IJSRuntime js)
     {
-        var newItem = new TodoItem
-        {
-            Id = _todos.Any() ? _todos.Max(t => t.Id) + 1 : 1,
-            Title = title,
-            IsDone = false
-        };
-        _todos.Add(newItem);
+        _js = js;
     }
 
-    public void Toggle(int id)
+    // Load todos from localStorage
+    public async Task LoadAsync()
     {
-        var item = _todos.FirstOrDefault(t => t.Id == id);
-        if (item != null)
+        var loaded = await _js.InvokeAsync<List<TodoItem>>("todoStorage.load", StorageKey);
+        Todos = loaded ?? new List<TodoItem>();
+    }
+
+    // Add a new todo
+    public async Task AddAsync(string title)
+    {
+        Todos.Add(new TodoItem { Id = Guid.NewGuid(), Title = title });
+        await SaveAsync();
+    }
+
+    // Toggle done
+    public async Task ToggleAsync(Guid id)
+    {
+        var todo = Todos.FirstOrDefault(t => t.Id == id);
+        if (todo != null)
         {
-            item.IsDone = !item.IsDone;
+            todo.IsDone = !todo.IsDone;
+            await SaveAsync();
         }
     }
 
-    public void Remove(int id)
+    // Remove a todo
+    public async Task RemoveAsync(Guid id)
     {
-        var item = _todos.FirstOrDefault(t => t.Id == id);
-        if (item != null)
-        {
-            _todos.Remove(item);
-        }
+        Todos.RemoveAll(t => t.Id == id);
+        await SaveAsync();
+    }
+
+    // Save todos to localStorage
+    private async Task SaveAsync()
+    {
+        await _js.InvokeVoidAsync("todoStorage.save", StorageKey, Todos);
     }
 }
