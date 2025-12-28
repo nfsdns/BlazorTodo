@@ -52,20 +52,27 @@ else
     {
         if (firstRender)
         {
+            // Load persisted todos from localStorage
             await TodoService.LoadAsync();
             StateHasChanged();
         }
     }
 
-
-
-    private async void HandleKeyDown(KeyboardEventArgs e)
+    private async Task HandleKeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
             await Add();
     }
-    private async Task Add() => await TodoService.AddAsync(newTitle.Trim());
+
+    private async Task Add()
+    {
+        if (!string.IsNullOrWhiteSpace(newTitle))
+        {
+            await TodoService.AddAsync(newTitle.Trim());
+            newTitle = string.Empty;
+        }
+    }
+
     private async Task Toggle(Guid id) => await TodoService.ToggleAsync(id);
     private async Task Remove(Guid id) => await TodoService.RemoveAsync(id);
-
 }
