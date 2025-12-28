@@ -1,0 +1,74 @@
+﻿@page "/todo"
+@using BlazorTodoApp.Client.Services
+
+
+@inject TodoService TodoService
+
+<h3 class="mb-3">Todo List</h3>
+
+<div class="input-group mb-3">
+    <input class="form-control"
+           placeholder="Add a new todo..."
+           @bind="newTitle"
+           @bind:event="oninput"
+           @onkeydown="HandleKeyDown" />
+
+    <button class="btn btn-primary" @onclick="Add">
+        Add
+    </button>
+</div>
+
+@if (TodoService.Todos.Count == 0)
+{
+    <p class="text-muted">No todos yet.</p>
+}
+else
+{
+    <ul class="list-group">
+        @foreach (var todo in TodoService.Todos)
+        {
+            <li class="list-group-item d-flex align-items-center" @key="todo.Id">
+                <input class="form-check-input me-2"
+                       type="checkbox"
+                       checked="@todo.IsDone"
+                       @onchange="() => Toggle(todo.Id)" />
+
+                <span class="flex-grow-1 @(todo.IsDone ? "text-decoration-line-through text-muted" : "")">
+                    @todo.Title
+                </span>
+
+                <button class="btn btn-sm btn-outline-danger"
+                        title="Delete"
+                        @onclick="() => Remove(todo.Id)">
+                    ✕
+                </button>
+            </li>
+        }
+    </ul>
+
+}
+
+@code {
+    private string newTitle = string.Empty;
+  
+    private void Add()
+    {
+        if (string.IsNullOrWhiteSpace(newTitle))
+            return;
+
+        TodoService.Add(newTitle.Trim());
+        newTitle = string.Empty;
+    }
+
+    private void Toggle(int id)
+        => TodoService.Toggle(id);
+
+    private void Remove(int id)
+        => TodoService.Remove(id);
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            Add();
+    }
+}

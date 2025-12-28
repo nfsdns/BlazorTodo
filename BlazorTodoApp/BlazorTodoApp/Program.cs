@@ -1,4 +1,4 @@
-using BlazorTodoApp.Client.Pages;
+using BlazorTodoApp.Client.Services;
 using BlazorTodoApp.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,6 +7,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
+
+builder.Services.AddScoped<TodoService>();
 
 var app = builder.Build();
 
